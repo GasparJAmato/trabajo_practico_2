@@ -2,6 +2,8 @@ import csv , requests , random
 from passlib.context import CryptContext
 import matplotlib.pyplot as plt
 from datetime import datetime
+from PIL import Image
+from io import BytesIO
 
 #-----------------------------VALIDACIONES------------------------------------------------------------------------------------------
 def validation_yes_no(respuesta:str)->bool:
@@ -411,7 +413,6 @@ def modificar_transacciones(mail:str,tipo_de_transaccion:str, cantidad:int)->Non
        lista_de_transacciones = [mail,tipo_de_transaccion,str(datetime.now())[0:16],cantidad]
        lista_ingresar_archivo("transacciones.csv", lista_de_transacciones)
     
-
 def ingresar_dinero(usuario:str):
     print("ha selecciondo ingresar dinero")
     cantidad = input("ingrese el monto a depositar")
@@ -421,6 +422,7 @@ def ingresar_dinero(usuario:str):
     modificar_transacciones(usuario,"Deposita", cantidad)
 
 #6-----------------------------------------------------------------------------------------------------------------------------------------
+
 #7-----------------------------------------------------------------------------------------------------------------------------------------
 def usuario_mas_apostado()->None:
      inf_usuarios = diccionario_infromacion_usuarios()
@@ -457,9 +459,9 @@ def usuarios_mas_gano()->None:
                     usuarios_ganadas[i[0]] = 1
                 
 
-        print("El usuario que mas veces gano es:",max(usuarios_ganadas, key=usuarios_ganadas.get))
-    
+        print("El usuario que mas veces gano es:",max(usuarios_ganadas, key=usuarios_ganadas.get)) 
 #8-----------------------------------------------------------------------------------------------------------------------------------------
+
 #9-----------------------------------------------------------------------------------------------------------------------------------------
 def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario:str)->None:
     print("GANO LOCAL")
@@ -647,7 +649,6 @@ def pago_apuesta(fixture_json:dict,usuario:str)->dict:
     
     apuesta_opc(pago_extra,id_fixture,usuario)
    
-
 def impresion_fixture(fixture_json:dict)->None:
     #Pre: Ingreso un diccionario con el fixture de un equipo
     #Post: Imprimo el fixture del equipo
