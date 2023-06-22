@@ -168,7 +168,66 @@ def inicio()->None:
     iniciar_sesion()  
 
 #1----------------------------------------------------------------------------------------------------------------------------------------
+#2----------------------------------------------------------------------------------------------------------------------------------------
+def buscar_jugadores_por_equipo()->None:
+    #Pre:Ingreso un equipo(str) y busca mediante la api
+    #Post:Devuelve un print del plantel del equipo correspondiente
+    print("EQUIPOS EXISTENTES")
+    ids_de_equipos = impresion_equipos_liga_profesional()
+    print()
+    equipo = input("ingrese un equipo ")
+    print()
+    while validation_equipos(equipo, ids_de_equipos.keys()):
+        print("")
+        impresion_equipos_liga_profesional()
+        print()
+        equipo = input("su equipo no fue encontrado, ingrese un equipo de la lista ")
+        print()
 
+    id_de_equipo = ids_de_equipos[equipo] 
+
+    url = "https://v3.football.api-sports.io/players"
+
+    params={#Parametros para filtrar los endpoint
+        "league":"128",
+        "season":"2023",
+        "team" : id_de_equipo
+    }
+    headers = {
+    'x-rapidapi-key': '0a46210016de4ff4781c6efe3d7e8711',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+
+    response = requests.request("GET", url, headers=headers, params=params)
+    reponse_json = response.json()
+
+    print(f"LISTA DE JUGADORES DE {equipo.upper()}")
+    for i in range(len(reponse_json["response"])):     
+       print("-", reponse_json["response"][i]["player"]["name"])
+    
+def impresion_equipos_liga_profesional()->dict:
+    #Pre: No ingreso nada
+    #Post: Genera un diccionario con ids y los equipos, y tambien genera un print con los equipos de la liga utilizando la api
+    url = "https://v3.football.api-sports.io/teams?country=Argentina&league=128&season=2023"
+
+    payload={}
+    headers = {
+    'x-rapidapi-key': '0a46210016de4ff4781c6efe3d7e8711',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+    reponse_json = response.json()
+
+    diccionario_equipos_ids = {}
+
+    for i in range(len(reponse_json["response"])):
+        diccionario_equipos_ids[reponse_json["response"][i]["team"]["name"]] = reponse_json["response"][i]["team"]["id"]
+        print("-",reponse_json["response"][i]["team"]["name"])
+    
+
+    return diccionario_equipos_ids
+#2----------------------------------------------------------------------------------------------------------------------------------------
 #4-----------------------------------------------------------------------------------------------------------------------------------------
 def info_equipos():
     dic_equipos_existentes = impresion_equipos_liga_profesional()
@@ -249,6 +308,287 @@ def generar_grafico_goles_minutos(minutos,goles,equipo):
     plt.title("Goles realizados por " + equipo)
     plt.show()
 #5-----------------------------------------------------------------------------------------------------------------------------------------
+#9-----------------------------------------------------------------------------------------------------------------------------------------
+def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario:str)->None:
+    print("GANO LOCAL")
+    print(pago_extra[id_fixture][0])
+    aposto = int (aposto)
+    pago = int(pago_extra[id_fixture][1])
+
+
+    if  opcion == "L" and opcion == pago_extra[id_fixture][0]:# L == L y L == L
+        dinero += aposto*pago
+        print("GANASTE: ",dinero)
+        modificar_transacciones(usuario,"Gana",dinero)
+        
+    elif opcion == "L" and opcion != pago_extra[id_fixture][0]: # L == y L != V
+       dinero += aposto*(pago/10)
+       print("GANASTE: ",dinero)
+       modificar_transacciones(usuario,"Gana",dinero)
+    
+    else:
+       print("PERDISTE")
+       dinero -= aposto
+       modificar_transacciones(usuario,"Pierde",dinero)
+
+def gana_visitante(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario)->None:
+    print("GANO VISITANTE")
+    print(pago_extra[id_fixture][0])
+    aposto = int (aposto)
+    pago = int(pago_extra[id_fixture][1])
+
+
+    if  opcion == "V" and opcion == pago_extra[id_fixture][0]:# V == V y V == V
+        dinero += aposto*pago
+        print("GANASTE: ",dinero)
+        modificar_transacciones(usuario,"Gana",dinero)
+        
+    elif opcion == "V" and opcion != pago_extra[id_fixture][0]: # V == V y V != L
+       dinero += aposto*(pago/10)
+       print("GANASTE: ",dinero)
+       modificar_transacciones(usuario,"Gana",dinero)
+    
+    else:
+       print("PERDISTE")
+       dinero -= aposto
+       modificar_transacciones(usuario,"Pierde",dinero)
+
+def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
+     datos = []
+     
+     with open("usuarios.csv", newline='', encoding="UTF-8") as archivo_csv:
+
+        csv_reader = csv.reader(archivo_csv, delimiter=',')
+
+        next(csv_reader) #Evitamos leer el header
+ 
+        for row in csv_reader:
+
+          datos.append(row)
+
+
+     usuarios_dinero = {} #Usuario:dinero
+
+     for i in range(len(datos)):
+         usuarios_dinero[datos[i][0]] = datos[i][5]
+
+     dinero_disponible = int(usuarios_dinero[usuario])
+
+     print("La apuesta podrá ser Ganador(L)/Empate/Ganador(V)")
+     opcion = input("Ingrese su opcion ").upper()
+
+     print()
+
+     print("Dinero disponible:",dinero_disponible)
+
+     print()
+
+     aposto = input("Cuanto desea apostar: ")
+
+     aposto = validar_numero(aposto)
+
+     while aposto > dinero_disponible: 
+              aposto = input("Saldo insuficiente, intente de nuevo: ")
+
+     modificar_transacciones(usuario,"Aposto", aposto) #Aumenta la cantidad apostada en usuarios.csv
+
+     dinero = 0
+
+     simulacion = 1
+
+     if simulacion == 1:
+        gana_local(pago_extra,id_fixture,opcion,aposto,dinero,usuario)
+    
+
+     elif simulacion == 2:
+        gana_visitante(pago_extra,id_fixture,opcion,aposto,dinero,usuario)
+
+     elif simulacion == 3:
+          pass
+      
+def apuesta_opc(pago_extra:dict,id_fixture:int,usuario:str)->None:
+
+    opcion = input("Deseas apostar por este partido s/n ")
+
+    if opcion == "s":
+        apuesta(pago_extra,id_fixture,usuario)
+
+    else:
+        print("SALISTE")
+
+def pago_apuesta(fixture_json:dict,usuario:str)->dict:
+    
+    pago_extra = {}#Id fixture:nro random de paga
+
+    numero_fixture = input("Indique el numero de partido para indicar su pago: ")
+
+    numero_fixture = validar_numero(numero_fixture)
+
+    cantidad_fixture = len(fixture_json["response"])+1
+
+    while numero_fixture > cantidad_fixture or numero_fixture <= 0:
+        print("Numero de partido incorrecto")
+        numero_fixture = input("Indique un numero correcto: ")
+        numero_fixture = validar_numero(numero_fixture)
+
+        
+    print(fixture_json["response"][numero_fixture-1]["fixture"]["id"])
+
+    id_fixture = fixture_json["response"][numero_fixture-1]["fixture"]["id"]#Guardo el id del fixture mediante el numero de fixture elegido
+
+    url = "https://v3.football.api-sports.io/predictions"
+
+    params={
+        "fixture":id_fixture
+        
+    }
+    headers = {
+    'x-rapidapi-key': '27f73ffa427b9ace919cc32b30270953',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+     
+    response = requests.request("GET", url, headers=headers, params=params)
+    reponse_predicion_json = response.json()
+
+    win_or_draw = reponse_predicion_json["response"][0]["predictions"]["win_or_draw"]
+
+    nro_pago = random.randint(1,4)
+
+    if win_or_draw == True:
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["away"]["name"],"ganador paga ",nro_pago," veces lo apostado")
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["away"]["name"],"empate paga ",0.5," veces lo apostado")
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["home"]["name"],"empate paga ",0.5," veces lo apostado")
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["home"]["name"],"ganador paga ",nro_pago/10," veces lo apostado")
+        print()
+        pago_extra[id_fixture] = "L",nro_pago
+    elif win_or_draw == False:
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["home"]["name"],"ganador paga ",nro_pago," veces lo apostado")
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["home"]["name"],"empata paga ",0.5," veces lo apostado")
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["away"]["name"],"empata paga ",0.5," veces lo apostado")
+        print()
+        print("Si se apuesta ",fixture_json["response"][numero_fixture-1]["teams"]["away"]["name"],"ganador paga ",nro_pago/10," veces lo apostado")
+        print()
+        pago_extra[id_fixture] = "V",nro_pago
+    
+    apuesta_opc(pago_extra,id_fixture,usuario)
+    pass
+
+def impresion_fixture(fixture_json:dict)->None:
+    #Pre: Ingreso un diccionario con el fixture de un equipo
+    #Post: Imprimo el fixture del equipo
+    for i in range(len(fixture_json["response"])):
+       print()
+       print("-"*3,fixture_json["response"][i]["fixture"]["date"],"-"*3)     
+       print(" "*10,fixture_json["response"][i]["teams"]["home"]["name"],"(L)")
+       print(" "*15,"VS")
+       print(" "*10,fixture_json["response"][i]["teams"]["away"]["name"],"(V)")
+       print("-"*10,"N°",i+1,"-"*10)   
+       print()
+       
+def fixture(usuario:str)->None:
+    #Pre: Pido un equipo (str)
+    #Post: Genero un pedido a la api con el fixture del equipo
+    print("EQUIPOS EXISTENTES")
+    ids_de_equipos = impresion_equipos_liga_profesional()
+    print()
+    equipo = input("ingrese un equipo ")
+    print()
+    while validation_equipos(equipo, ids_de_equipos.keys()):
+        print("")
+        impresion_equipos_liga_profesional()
+        print()
+        equipo = input("su equipo no fue encontrado, ingrese un equipo de la lista ")
+        print()
+
+    id_de_equipo = ids_de_equipos[equipo]
+
+    url = "https://v3.football.api-sports.io/fixtures"
+
+    params={
+        "league":"128",
+        "season":"2023",
+        "team" : id_de_equipo
+    }
+    headers = {
+    'x-rapidapi-key': '27f73ffa427b9ace919cc32b30270953',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+     
+    response = requests.request("GET", url, headers=headers, params=params)
+    fixture_json = response.json()
+
+    print(f"FIXTURE {equipo.upper()}")
+
+    impresion_fixture(fixture_json) #Imprime el fixture del equipo elegido 
+
+    pago_apuesta(fixture_json,usuario) 
+
+#9-----------------------------------------------------------------------------------------------------------------------------------------
+
+#-------------------MENU------------------------------------------------------------------------------------------------------------------
+def imprimir_opciones() -> None:
+    print("-"*20)
+    print("Menu de Opciones:")
+    print("a. Plantel segun el equipo")
+    print("b. Tabla de posiciones segun la temporada")
+    print("c. Informacion de un equipo (Estadio y escudo)")
+    print("d. Grafico por minutos y goles segun un equipo")
+    print("e. Ingresar dinero a su cuenta")
+    print("f. Usuario que mas dinero aposto")
+    print("h. Usuario que mas veces gano")
+    print("i. Apostar")
+    print("k. Salir")
+    print("-"*20)
+
+def seleccionar_opcion() -> str:
+    imprimir_opciones()
+
+    opt = input("Ingrese una opcion: ")
+
+    return opt
+
+def menu(usuario)->None:
+
+    opt = seleccionar_opcion()
+
+    while   opt  !=  'k' :
+
+        if  opt ==  'a' :
+            buscar_jugadores_por_equipo()
+
+        elif  opt  ==  'b' :
+            tabla_posiciones()
+
+        elif  opt  ==  'c' :
+            info_equipos()
+
+        elif  opt  ==  'd' :
+             grafico()
+
+        elif  opt  ==  'e' :
+            ingresar_dinero(usuario)
+        
+        elif opt  ==  'f' :
+            usuario_mas_apostado()
+        
+        elif opt  ==  'h' :
+            usuarios_mas_gano()
+
+        elif opt  ==  'i' :
+            fixture(usuario)#ACEDER AL FIXTURE DE TU EQUIPO PARA APOSTAR
+        else:
+            print("OPCION INCORRECTA!!!. Seleccione una opcion porfavor")
+        
+        opt  =  seleccionar_opcion ()
+
+#-------------------MENU--------------------------------------------------------------------------------------------------------------------
 
 def menu(usuario)->None:
     pass
