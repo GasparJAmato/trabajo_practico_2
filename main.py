@@ -294,6 +294,16 @@ def info_equipos():
     print("Ciudad: ", reponse_json["response"][0]["venue"]["city"] )
     print("Capacidad: ",reponse_json["response"][0]["venue"]["capacity"] )
     print("Superficie: ", reponse_json["response"][0]["venue"]["surface"])
+
+    # URL de la imagen
+    url_imagen = reponse_json["response"][0]["team"]["logo"]
+
+    # Realiza una solicitud GET para obtener la imagen
+    response = requests.get(url_imagen)
+    # Abre la imagen utilizando Pillow
+    image = Image.open(BytesIO(response.content))
+    # Muestra la imagen
+    image.show()
 #4-----------------------------------------------------------------------------------------------------------------------------------------
 
 #5-----------------------------------------------------------------------------------------------------------------------------------------
@@ -438,6 +448,7 @@ def usuarios_mas_gano()->None:
 #9-----------------------------------------------------------------------------------------------------------------------------------------
 def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario:str)->None:
     print("GANO LOCAL")
+    print()
     print(pago_extra[id_fixture][0])
     aposto = int (aposto)
     pago = int(pago_extra[id_fixture][1])
@@ -475,6 +486,21 @@ def gana_visitante(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:i
        print("GANASTE: ",dinero)
        modificar_transacciones(usuario,"Gana",dinero)
     
+    else:
+       print("PERDISTE")
+       dinero -= aposto
+       modificar_transacciones(usuario,"Pierde",dinero)
+
+def empate(opcion:int,aposto:int,dinero:int,usuario:str)->None:
+    print("EMPATARON")
+    print()
+    aposto = int (aposto)
+
+    if  opcion == "EMPATE": #Empate = Empate
+        dinero += aposto*0.5
+        print("GANASTE: ",dinero)
+        modificar_transacciones(usuario,"Gana",dinero)
+        
     else:
        print("PERDISTE")
        dinero -= aposto
@@ -531,7 +557,7 @@ def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
         gana_visitante(pago_extra,id_fixture,opcion,aposto,dinero,usuario)
 
      elif simulacion == 3:
-          pass
+        empate(opcion,aposto,dinero,usuario)
       
 def apuesta_opc(pago_extra:dict,id_fixture:int,usuario:str)->None:
 
