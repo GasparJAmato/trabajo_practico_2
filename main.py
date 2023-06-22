@@ -2,21 +2,33 @@ import csv , requests , random
 from passlib.context import CryptContext
 import matplotlib.pyplot as plt
 from datetime import datetime
+from PIL import Image
+from io import BytesIO
 
 #-----------------------------VALIDACIONES------------------------------------------------------------------------------------------
-def validation_yes_no(respuesta)->bool:
+def validation_yes_no(respuesta:str)->bool:
+    #Pre: Resive una respuesta del tipo str
+    #Post: Retorna un booleano dependiendo si la respues es "s" o "n"
     return respuesta not in ["s" , "n"]
 
-def validation_1_2(respuesta)->bool:
+def validation_1_2(respuesta:str)->bool:
+    #Pre: Resive una variable llamada respuesta que contenga un str 
+    #Post: Retorna un booleano dependiendo si la respues es "1" o "2"
     return respuesta not in ["1", "2"]
 
-def validation_mail(mail, lista_de_mails)->bool:
+def validation_mail(mail:str, lista_de_mails:list)->bool:
+    #Pre: Resive una variable llamada mail (mail = nombre@hotmail.com) y una lista con los mails ingresado (lista_de_mails = [name@hotmail.com,username@gmail.com,etc])
+    #Post: Retorna un booleano dependiendo si mail cumple con @, .com o si esta en lista_de_mails
      return "@" not in mail or mail in lista_de_mails or ".com" not in mail 
 
-def validation_equipos(equipo_elegido, equipos_existentes)->bool:
+def validation_equipos(equipo_elegido:str, equipos_existentes:list)->bool:
+    #Pre: Resive una variable llamado equipo_elegido ingresado por el usuario (ej Tigre) y una lista llamada lista equipos_existentes donde se encuentra los equipos traidos por la api  (lista equipos_existentes = Tigre, Boca Juniors, etc) 
+    #Post: Retorna un booleano dependiendo si el equipo_elegido se encuentra en en la llamada lista equipos_existentes
     return equipo_elegido not in equipos_existentes
 
-def validation_temporadas(temporada):
+def validation_temporadas(temporada:str):
+    #Pre: Resive una variable con el numero de temporada ingresado por el usuario (temporada = 2022)
+    #POst: Retorna un booleando dependiendo si se en la lista llamada lista_temporadas (lista_temporadas = [2015,..,2023])
     lista_temporadas = []
     for i in range(9):
         lista_temporadas.append(str(i + 2015))
@@ -24,19 +36,29 @@ def validation_temporadas(temporada):
     return temporada not in lista_temporadas
 
 def validar_numero(numero:str)->int:
+    #Pre: Resive una variable llamado numero del tipo str (ej numero = "1")
+    #Post: Retorna retorna un numero entero (ej numero = 1)
+
     validar = numero.isnumeric()
     while validar != True:
         numero = input("Ingrese un numero ")
         validar = numero.isnumeric()
     numero = int(numero)
 
-
     return numero 
+
+def validar_contraseña(password:str,password_crypt:str)->bool:
+    #Pre:Ingreso dos variable una con la contraseña y otra con la contraseña encryptada
+    #Post:Devuelve true si la contraseña correspone a la encriptacion
+    contexto = CryptContext(schemes=["sha256_crypt"])#Esquema de incriptacion
+    return contexto.verify(password, password_crypt)
+
 #-----------------------------VALIDACIONES--------------------------------------------------------------------------------------------
 
-
-#lee el archivo csv y lo convierte en una lista                
+#1-------------------------------------------------------------------------------------------------------------------------------------
+               
 def lista_informacion_de_usuarios()->list:
+    #lee el archivo csv y lo convierte en una lista 
     lista_info = []
 
     with open("usuarios.csv") as archivo_csv:
@@ -47,10 +69,8 @@ def lista_informacion_de_usuarios()->list:
 
     return lista_info
 
-#1-------------------------------------------------------------------------------------------------------------------------------------
-#lee archivos csv y lo convierte en un diccionario 
-
 def diccionario_infromacion_usuarios()->dict:
+    #lee archivos csv y lo convierte en un diccionario 
     diccionario_info = {}
     with open("usuarios.csv") as archivo_csv:
         csv_reader = csv.reader(archivo_csv)
@@ -62,85 +82,80 @@ def diccionario_infromacion_usuarios()->dict:
     return diccionario_info
 
 def iniciar_sesion()-> None:
-
+    #Pre:Resive del usuario la contraseña y el mail
+    #Post:Ingresa al menu 
     validacion = "1"
-    while(validacion == "1"):
+    while(validacion == "1"): #Verifica que el mail ingresado sea correcto
         dic_ingresado = diccionario_infromacion_usuarios()
-        mail = input("ingrese su mail: ")
-
+        mail = input("-ingrese su mail: ")
+        print()
 
         if mail in list(dic_ingresado.keys()):
-            print("su mail es correcto")
+            print("Su mail es correcto")
+            print()
             validacion = "0"
 
         elif mail not in list(dic_ingresado.keys()):
-            print("su mail no se encuentra en nustro sistema")
+            print("XXX-Su mail no se encuentra en nustro sistema-XXX")
+            print()
             qst = input("si quiere ingresar un nuevo usuario ingrese (1) si quiere intentarlo de nuevo ingrese (2): ")
+            print()
             while (validation_1_2(qst)):
-                qst = input("Intente denuevo, (1)- nuevo usuario (2)- intentar de nuevo con otro mail: ")
+                qst = input("Intente de nuevo, (1)- nuevo usuario (2)- intentar de nuevo con otro mail: ")
+                print()
             
             if(qst == "1"):
                 creacion_usuario()
-           
-            print("intentemoslo de nuevo")
+            print("Intentemoslo de nuevo")
+            print()
 
-    password = input("Ingrese la contraseña ")
+    password = input("-Ingrese la contraseña: ")
+    print()
 
     password_crypt = dic_ingresado[mail]["password"]
 
-    while (True != verificar_contraseña(password,password_crypt)):
+    while (True != validar_contraseña(password,password_crypt)):#Valida la password
             
-            print("contraseña incorrecta")
-            password = input("Ingrese de nuevo la contraseña ")
+            print("XXX-contraseña incorrecta-XXX")
+            print()
+            password = input("-Ingrese de nuevo la contraseña: ")
             password_crypt = encriptar_contraseña(password)
 
-    if True == verificar_contraseña(password,password_crypt):
+    if True == validar_contraseña(password,password_crypt):
         menu(mail)        
 
-def verificar_contraseña(password:str,password_crypt:str)->bool:
-    #Pre:Ingreso una variable con la contraseña y otra con la contraseña encryptada
-    #Post:Devuelve true si la contraseña correspone a la encriptacion
-    contexto = CryptContext(
-          schemes =["pbkdf2_sha256"],
-          default ="pbkdf2_sha256",
-          pbkdf2_sha256__default_rounds = 3000)
-    
-    return contexto.verify(password,password_crypt)
-
 def encriptar_contraseña(password:str)->str:
-    #Pre: Ingrese un str 
-    #Post: Devuelve el str encriptado
-    contexto = CryptContext(
-    schemes =["pbkdf2_sha256"],
-    default ="pbkdf2_sha256",
-    pbkdf2_sha256__default_rounds = 3000)
+    #Pre: Ingrese una variable llamada paswword (password = contraseña del usuario)
+    #Post: Retorno la variable con su str encriptado 
+    contexto = CryptContext(schemes=["sha256_crypt"])#Esquema de incriptacion
+    return contexto.hash(password)
 
-    password_crypt = contexto.hash(password)
-
-    return password_crypt
 
 def creacion_usuario()-> None:   
+    #Pre: Ingrese un str 
+    #Post: Devuelve el str encriptado
     dic_ingresado = diccionario_infromacion_usuarios()
     
-    
-
     print("Bienvenido a #Jugarsela# ingrese sus datos para continuar")
+    print()
     #ingreso del mail
-    mail = input("Ingrese su mail: ")
+    mail = input("-Ingrese su mail: ")
+    print()
     lista_de_mails = list(dic_ingresado.keys())
     while(validation_mail(mail, lista_de_mails)):
          mail = input("Su mail ya existe en el sistema o es incorrecto: ")
+         print()
     
     #ingreso de username
-    username = input("Ingrese su nombre usuario: ")
-
+    username = input("-Ingrese su nombre usuario: ")
+    print()
     #ingreso de password
-    password = input("Ingrese su contraseña: ")
-
+    password = input("-Ingrese su contraseña: ")
+    print()
     #Encripto la password
     password_crypt = encriptar_contraseña(password)
-
     print("Su informacion fue ingresada con exito")
+    print()
 
     #Ingreso de usuario a la lista para despues que se suba al usuarios.csv
     nuevo_usuario = [mail, username, password_crypt, 0,0,0]
@@ -160,8 +175,10 @@ def lista_ingresar_archivo(archivo, lista_a_ingresar)->None:
 
 def inicio()->None:
     qst = input("¿Es un usuario nuevo? s/n: ")
+    print()
     while(validation_yes_no(qst)):
         qst = input("Hubo un error: ¿Es un usuario nuevo? s/n: ")
+        print()
 
     if(qst == "s"):
         creacion_usuario()
@@ -297,7 +314,6 @@ def info_equipos():
 
     # URL de la imagen
     url_imagen = reponse_json["response"][0]["team"]["logo"]
-
     # Realiza una solicitud GET para obtener la imagen
     response = requests.get(url_imagen)
     # Abre la imagen utilizando Pillow
@@ -399,16 +415,15 @@ def modificar_transacciones(mail:str,tipo_de_transaccion:str, cantidad:int)->Non
        lista_de_transacciones = [mail,tipo_de_transaccion,str(datetime.now())[0:16],cantidad]
        lista_ingresar_archivo("transacciones.csv", lista_de_transacciones)
     
-
 def ingresar_dinero(usuario:str):
-    print("ha selecciondo ingresar dinero")
-    cantidad = input("ingrese el monto a depositar")
+    cantidad = input("Ingrese el monto a depositar")
     
     cantidad = validar_numero(cantidad)
 
     modificar_transacciones(usuario,"Deposita", cantidad)
 
 #6-----------------------------------------------------------------------------------------------------------------------------------------
+
 #7-----------------------------------------------------------------------------------------------------------------------------------------
 def usuario_mas_apostado()->None:
      inf_usuarios = diccionario_infromacion_usuarios()
@@ -419,8 +434,11 @@ def usuario_mas_apostado()->None:
      for i in inf_usuarios.keys():
          usuarios_apuestas[i] = inf_usuarios[i]["cantidadApostada"]
 
+     if max(usuarios_apuestas, key=usuarios_apuestas.get) == "MAIL":
+         print("No hay apuestas realizadas")
 
-     print("El usuario que mas veces aposto es:",max(usuarios_apuestas, key=usuarios_apuestas.get))
+     else:
+           print("El usuario que mas veces aposto es:",max(usuarios_apuestas, key=usuarios_apuestas.get))
 
 #7-----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -442,9 +460,9 @@ def usuarios_mas_gano()->None:
                     usuarios_ganadas[i[0]] = 1
                 
 
-        print("El usuario que mas veces gano es:",max(usuarios_ganadas, key=usuarios_ganadas.get))
-    
+        print("El usuario que mas veces gano es:",max(usuarios_ganadas, key=usuarios_ganadas.get)) 
 #8-----------------------------------------------------------------------------------------------------------------------------------------
+
 #9-----------------------------------------------------------------------------------------------------------------------------------------
 def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario:str)->None:
     print("GANO LOCAL")
@@ -632,7 +650,6 @@ def pago_apuesta(fixture_json:dict,usuario:str)->dict:
     
     apuesta_opc(pago_extra,id_fixture,usuario)
    
-
 def impresion_fixture(fixture_json:dict)->None:
     #Pre: Ingreso un diccionario con el fixture de un equipo
     #Post: Imprimo el fixture del equipo
@@ -704,6 +721,7 @@ def seleccionar_opcion() -> str:
     imprimir_opciones()
 
     opt = input("Ingrese una opcion: ")
+    print()
 
     return opt
 
@@ -742,6 +760,7 @@ def menu(usuario)->None:
         opt  =  seleccionar_opcion ()
 
 #-------------------MENU--------------------------------------------------------------------------------------------------------------------
+
 #-------------------CREACION DE ARCHIVO-----------------------------------------------------------------------------------------------------
 def creacion_archivos_csv()->None:
      
@@ -755,6 +774,7 @@ def creacion_archivos_csv()->None:
 #-------------------CREACION DE ARCHIVO-----------------------------------------------------------------------------------------------------
 
 def main()->None:
+    creacion_archivos_csv()
     inicio()
 
 main()
