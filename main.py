@@ -169,6 +169,37 @@ def inicio()->None:
 
 #1----------------------------------------------------------------------------------------------------------------------------------------
 
+#4-----------------------------------------------------------------------------------------------------------------------------------------
+def info_equipos():
+    dic_equipos_existentes = impresion_equipos_liga_profesional()
+
+    equipo_elegido = input("Elija un equipo de la lista: ")
+    while(validation_equipos(equipo_elegido, list(dic_equipos_existentes.keys()))):
+        equipo_elegido = input("Su equipo no esta en la lista, elija otro ")
+
+    url = "https://v3.football.api-sports.io/teams"
+
+    params={
+        "league":"128",
+        "id": dic_equipos_existentes[equipo_elegido],
+        "season": "2023"
+    }
+    headers = {
+    'x-rapidapi-key': '0a46210016de4ff4781c6efe3d7e8711',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+
+    response = requests.request("GET", url, headers=headers, params=params)
+    reponse_json = response.json() 
+    print("")
+    print("----Informacion Sobre el Estadio----")
+    print("Nombre del estadio: ", reponse_json["response"][0]["venue"]["name"] )
+    print("Direccion del estadio: ",reponse_json["response"][0]["venue"]["address"] )
+    print("Ciudad: ", reponse_json["response"][0]["venue"]["city"] )
+    print("Capacidad: ",reponse_json["response"][0]["venue"]["capacity"] )
+    print("Superficie: ", reponse_json["response"][0]["venue"]["surface"])
+#4-----------------------------------------------------------------------------------------------------------------------------------------
+
 #5-----------------------------------------------------------------------------------------------------------------------------------------
 def grafico() -> None:
     print("EQUIPOS EXISTENTES")
