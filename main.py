@@ -4,19 +4,19 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 #-----------------------------VALIDACIONES------------------------------------------------------------------------------------------
-def validation_yes_no(respuesta)->bool:
+def validation_yes_no(respuesta:str)->bool:
     return respuesta not in ["s" , "n"]
 
-def validation_1_2(respuesta)->bool:
+def validation_1_2(respuesta:str)->bool:
     return respuesta not in ["1", "2"]
 
-def validation_mail(mail, lista_de_mails)->bool:
+def validation_mail(mail:str, lista_de_mails:list)->bool:
      return "@" not in mail or mail in lista_de_mails or ".com" not in mail 
 
-def validation_equipos(equipo_elegido, equipos_existentes)->bool:
+def validation_equipos(equipo_elegido:str, equipos_existentes:list)->bool:
     return equipo_elegido not in equipos_existentes
 
-def validation_temporadas(temporada):
+def validation_temporadas(temporada:str):
     lista_temporadas = []
     for i in range(9):
         lista_temporadas.append(str(i + 2015))
@@ -34,6 +34,7 @@ def validar_numero(numero:str)->int:
     return numero 
 #-----------------------------VALIDACIONES--------------------------------------------------------------------------------------------
 
+#1-------------------------------------------------------------------------------------------------------------------------------------
 
 #lee el archivo csv y lo convierte en una lista                
 def lista_informacion_de_usuarios()->list:
@@ -47,7 +48,6 @@ def lista_informacion_de_usuarios()->list:
 
     return lista_info
 
-#1-------------------------------------------------------------------------------------------------------------------------------------
 #lee archivos csv y lo convierte en un diccionario 
 
 def diccionario_infromacion_usuarios()->dict:
@@ -66,32 +66,39 @@ def iniciar_sesion()-> None:
     validacion = "1"
     while(validacion == "1"):
         dic_ingresado = diccionario_infromacion_usuarios()
-        mail = input("ingrese su mail: ")
+        mail = input("-ingrese su mail: ")
+        print()
 
 
         if mail in list(dic_ingresado.keys()):
-            print("su mail es correcto")
+            print("Su mail es correcto")
+            print()
             validacion = "0"
 
         elif mail not in list(dic_ingresado.keys()):
-            print("su mail no se encuentra en nustro sistema")
+            print("XXX-Su mail no se encuentra en nustro sistema-XXX")
+            print()
             qst = input("si quiere ingresar un nuevo usuario ingrese (1) si quiere intentarlo de nuevo ingrese (2): ")
+            print()
             while (validation_1_2(qst)):
-                qst = input("Intente denuevo, (1)- nuevo usuario (2)- intentar de nuevo con otro mail: ")
+                qst = input("Intente de nuevo, (1)- nuevo usuario (2)- intentar de nuevo con otro mail: ")
+                print()
             
             if(qst == "1"):
                 creacion_usuario()
-           
-            print("intentemoslo de nuevo")
+            print("Intentemoslo de nuevo")
+            print()
 
-    password = input("Ingrese la contraseña ")
+    password = input("-Ingrese la contraseña: ")
+    print()
 
     password_crypt = dic_ingresado[mail]["password"]
 
     while (True != verificar_contraseña(password,password_crypt)):
             
-            print("contraseña incorrecta")
-            password = input("Ingrese de nuevo la contraseña ")
+            print("XXX-contraseña incorrecta-XXX")
+            print()
+            password = input("-Ingrese de nuevo la contraseña: ")
             password_crypt = encriptar_contraseña(password)
 
     if True == verificar_contraseña(password,password_crypt):
@@ -125,22 +132,25 @@ def creacion_usuario()-> None:
     
 
     print("Bienvenido a #Jugarsela# ingrese sus datos para continuar")
+    print()
     #ingreso del mail
-    mail = input("Ingrese su mail: ")
+    mail = input("-Ingrese su mail: ")
+    print()
     lista_de_mails = list(dic_ingresado.keys())
     while(validation_mail(mail, lista_de_mails)):
          mail = input("Su mail ya existe en el sistema o es incorrecto: ")
+         print()
     
     #ingreso de username
-    username = input("Ingrese su nombre usuario: ")
-
+    username = input("-Ingrese su nombre usuario: ")
+    print()
     #ingreso de password
-    password = input("Ingrese su contraseña: ")
-
+    password = input("-Ingrese su contraseña: ")
+    print()
     #Encripto la password
     password_crypt = encriptar_contraseña(password)
-
     print("Su informacion fue ingresada con exito")
+    print()
 
     #Ingreso de usuario a la lista para despues que se suba al usuarios.csv
     nuevo_usuario = [mail, username, password_crypt, 0,0,0]
@@ -160,8 +170,10 @@ def lista_ingresar_archivo(archivo, lista_a_ingresar)->None:
 
 def inicio()->None:
     qst = input("¿Es un usuario nuevo? s/n: ")
+    print()
     while(validation_yes_no(qst)):
         qst = input("Hubo un error: ¿Es un usuario nuevo? s/n: ")
+        print()
 
     if(qst == "s"):
         creacion_usuario()
@@ -419,8 +431,11 @@ def usuario_mas_apostado()->None:
      for i in inf_usuarios.keys():
          usuarios_apuestas[i] = inf_usuarios[i]["cantidadApostada"]
 
+     if max(usuarios_apuestas, key=usuarios_apuestas.get) == "MAIL":
+         print("No hay apuestas realizadas")
 
-     print("El usuario que mas veces aposto es:",max(usuarios_apuestas, key=usuarios_apuestas.get))
+     else:
+           print("El usuario que mas veces aposto es:",max(usuarios_apuestas, key=usuarios_apuestas.get))
 
 #7-----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -704,6 +719,7 @@ def seleccionar_opcion() -> str:
     imprimir_opciones()
 
     opt = input("Ingrese una opcion: ")
+    print()
 
     return opt
 
@@ -755,6 +771,7 @@ def creacion_archivos_csv()->None:
 #-------------------CREACION DE ARCHIVO-----------------------------------------------------------------------------------------------------
 
 def main()->None:
+    creacion_archivos_csv()
     inicio()
 
 main()
