@@ -132,8 +132,8 @@ def encriptar_contraseña(password:str)->str:
 
 
 def creacion_usuario()-> None:   
-    #Pre: Ingrese un str 
-    #Post: Devuelve el str encriptado
+    #Pre: Le pide al usuario que ingrese la contraseña y el mail
+    #Post: Crea el usuario metiendolo en el archivo csv llamado usuarios.csv
     dic_ingresado = diccionario_infromacion_usuarios()
     
     print("Bienvenido a #Jugarsela# ingrese sus datos para continuar")
@@ -164,16 +164,22 @@ def creacion_usuario()-> None:
     #Sube la lista anterior con el archivo usuarios.csv
      
 def lista_ingresar_archivo_usuarios(lista_a_ingresar)->None: 
+    #Pre:Resive una lista llamada lista_a_ingresar con los movimientos echos por el usuario(ej ingreso de dinero)
+    #Post:Remplaza el archivo usuario,csv y lo cambia por la nueva lista
     with open("usuarios.csv", 'w', newline ='') as archivo_csv:
         writer = csv.writer(archivo_csv, delimiter=",")       
         writer.writerows(lista_a_ingresar)
 
 def lista_ingresar_archivo(archivo, lista_a_ingresar)->None:
+    #Pre:Resive un str con el nombre del archivo csv en la variable archivo y una lista con con los str a ingresar al archivo
+    #Post:Ingresa la lista al archivo csv en la ultima linea
     with open(archivo, 'a', newline ='') as archivo_csv:
         writer = csv.writer(archivo_csv, delimiter=",")       
         writer.writerow(lista_a_ingresar)   
 
 def inicio()->None:
+    #Pre: Solicita s o n al usuario 
+    #Post: Si es ingresa a la funcion creacion de usuario, y si es n ingresa a la funcion iniciar secion
     qst = input("¿Es un usuario nuevo? s/n: ")
     print()
     while(validation_yes_no(qst)):
@@ -188,10 +194,10 @@ def inicio()->None:
 #1----------------------------------------------------------------------------------------------------------------------------------------
 #2----------------------------------------------------------------------------------------------------------------------------------------
 def buscar_jugadores_por_equipo()->None:
-    #Pre:Ingreso un equipo(str) y busca mediante la api
-    #Post:Devuelve un print del plantel del equipo correspondiente
+    #Pre:El usuario ingresa un equipo(str)
+    #Post:Lo busca mediante la api y devuelve un print del plantel del equipo correspondiente
     print("EQUIPOS EXISTENTES")
-    ids_de_equipos = impresion_equipos_liga_profesional()
+    ids_de_equipos = impresion_equipos_liga_profesional()#Pidos los equipos a la api
     print()
     equipo = input("ingrese un equipo ")
     print()
@@ -224,8 +230,8 @@ def buscar_jugadores_por_equipo()->None:
        print("-", reponse_json["response"][i]["player"]["name"])
     
 def impresion_equipos_liga_profesional()->dict:
-    #Pre: No ingreso nada
-    #Post: Genera un diccionario con ids y los equipos, y tambien genera un print con los equipos de la liga utilizando la api
+    #Pre: Se genera un pedido a la api con los equipos de en argentina en 2023
+    #Post: Genera un diccionario con ids y equipos(ej 453:Indendiente), despues de generarlo tambien genera un print con los equipos de la liga utilizando la api
     url = "https://v3.football.api-sports.io/teams?country=Argentina&league=128&season=2023"
 
     payload={}
@@ -248,6 +254,8 @@ def impresion_equipos_liga_profesional()->dict:
 #2-----------------------------------------------------------------------------------------------------------------------------------------
 #3-----------------------------------------------------------------------------------------------------------------------------------------
 def tabla_posiciones()->None:
+    #Pre: Se genera un pedido a la api con el numero de league y año de temporada
+    #Post: Genera un print con la tabla de posiciones de la temporada elegida
     season = input("ingrese la temporada a utilizar: ")
     while(validation_temporadas(season)):
         season = input("ingrese una temporada desde 2015-2023 (2023 no esta actualizado)  ")
@@ -284,7 +292,12 @@ def tabla_posiciones()->None:
 #3-----------------------------------------------------------------------------------------------------------------------------------------
 #4-----------------------------------------------------------------------------------------------------------------------------------------
 def info_equipos():
-    dic_equipos_existentes = impresion_equipos_liga_profesional()
+    #Pre: Realizo un pedido a la api de un equipo especifico
+    #Post: Genera un print con la informacion del equipo y su escudo
+    print("EQUIPOS EXISTENTES")
+    print()
+    dic_equipos_existentes = impresion_equipos_liga_profesional()#Imprimo los equipos y me taigo el diccionario con el id del equipo
+    print()
 
     equipo_elegido = input("Elija un equipo de la lista: ")
     while(validation_equipos(equipo_elegido, list(dic_equipos_existentes.keys()))):
@@ -324,7 +337,10 @@ def info_equipos():
 
 #5-----------------------------------------------------------------------------------------------------------------------------------------
 def grafico() -> None:
+    #Pre: Realizo un pedido a la api de un equipo especifico con las estadisticas de goles x minuto
+    #Post: Imprimo un grafico con dichas estadisticas
     print("EQUIPOS EXISTENTES")
+    print()
     ids_de_equipos = impresion_equipos_liga_profesional()
     print()
     equipo = input("ingrese un equipo ")
@@ -361,9 +377,9 @@ def grafico() -> None:
 
     generar_grafico_goles_minutos(minutos,goles,equipo)
 
-def generar_grafico_goles_minutos(minutos,goles,equipo):
-    #print(f"Goles del equipo {nombre_equipo}: {goles_equipo}")
-    #print(f"Minutos jugados del equipo {nombre_equipo}: {minutos_jugados}")
+def generar_grafico_goles_minutos(minutos:list,goles,equipo:list):
+    #Pre:Recivo 2 listas, llamadas minutos con los minutos correspondiente a cada gol y Goles con los goles correspondiente a cada minuto
+    #Post: Genero un grafico con los minutos jugados en eje x y los goles realizados en el eje y 
 
     plt.plot(minutos, goles)
     plt.xlabel("Minutos")
@@ -374,6 +390,9 @@ def generar_grafico_goles_minutos(minutos,goles,equipo):
 #6-----------------------------------------------------------------------------------------------------------------------------------------
 
 def lista_transacciones()->list:
+    #Pre:Genero una lista llamada lista_info con las transacciones del archivo csv llamado transacciones.csv
+    #Post:Retorno la lista llamada lista_info
+
     lista_info = []
     with open("transacciones.csv") as archivo_csv:
         csv_reader = csv.reader(archivo_csv)
@@ -385,6 +404,8 @@ def lista_transacciones()->list:
     return lista_info
 
 def conversor_de_dict_en_list(diccionario:dict)->list:
+    #Pre:Recivo una diccionario con la informacion del usuario generado con funcion "diccionario_infromacion_usuarios()""
+    #Post: Retorno el diccionario en una lista
     mails = diccionario.keys()
     lista_resultante = []
     for i in mails:
@@ -394,7 +415,8 @@ def conversor_de_dict_en_list(diccionario:dict)->list:
     return lista_resultante
 
 def modificar_transacciones(mail:str,tipo_de_transaccion:str, cantidad:int)->None:
-    
+    #Pre:Recivo del usuario 3 variables llamadas, mail, tipo_de_transaccion y cantidad (ej mail=name@hotmail.com, tipo_de_transaccion = "deposita" y cantidad = 302002)
+    #Post:Actualizo el archivo transaccion.csv y usuarios.csv 
 
     diccionario_informacion_usuarios = diccionario_infromacion_usuarios()
 
@@ -416,6 +438,8 @@ def modificar_transacciones(mail:str,tipo_de_transaccion:str, cantidad:int)->Non
        lista_ingresar_archivo("transacciones.csv", lista_de_transacciones)
     
 def ingresar_dinero(usuario:str):
+    #Pre: Recivo el mail de usuario que ingreso sesion y solicito la cantidad de dinero a ingresar
+    #Post: Ingreso el dinero al archivo usuario.csv y genero una transacion modificando transacciones.csv
     cantidad = input("Ingrese el monto a depositar")
     
     cantidad = validar_numero(cantidad)
@@ -426,6 +450,8 @@ def ingresar_dinero(usuario:str):
 
 #7-----------------------------------------------------------------------------------------------------------------------------------------
 def usuario_mas_apostado()->None:
+     #Pre: Genero un diccionario con la informacion de los usuarios
+     #Post: Mediante el diccionario busco al usuario que mas aposto 
      inf_usuarios = diccionario_infromacion_usuarios()
      
 
@@ -444,6 +470,8 @@ def usuario_mas_apostado()->None:
 
 #8-----------------------------------------------------------------------------------------------------------------------------------------
 def usuarios_mas_gano()->None:
+     #Pre:Leo el archivo transacciones.csv 
+     #Post:Busco el usario que mas veces aparacese que gano en el archivo 
      
      with open("transacciones.csv") as archivo_csv:
         csv_reader = csv.reader(archivo_csv)
@@ -464,7 +492,12 @@ def usuarios_mas_gano()->None:
 #8-----------------------------------------------------------------------------------------------------------------------------------------
 
 #9-----------------------------------------------------------------------------------------------------------------------------------------
+
 def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario:str)->None:
+    #Pre: Resivo pago extra (pago extra:L(Se guarda con "L" si tiene el true el local o con "V"
+    #si tiene el true el visitante),3(Numero al azar)), id_fixture(numero de fixture),opcion("L","V" y "EMPATE"), usuario(mail del usuario) y dinero 
+    #Post: Revisa la opcion, si gano genera un pago, una transaccion y actualiza el archivo csv con el dinero ganado y si pierde lo resta del archivo csv y genera una transaccion
+
     print("GANO LOCAL")
     print()
     print(pago_extra[id_fixture][0])
@@ -487,7 +520,10 @@ def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,u
        dinero -= aposto
        modificar_transacciones(usuario,"Pierde",dinero)
 
-def gana_visitante(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario)->None:
+def gana_visitante(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario)->None: 
+    #Pre: Resivo pago extra (pago extra:L(Se guarda con "L" si tiene el true el local o con "V"
+    #si tiene el true el visitante),3(Numero al azar)), id_fixture(numero de fixture),opcion("L","V" y "EMPATE"), usuario(mail del usuario) y dinero 
+    #Post: Revisa la opcion, si gano genera un pago, una transaccion y actualiza el archivo csv con el dinero ganado y si pierde lo resta del archivo csv y genera una transaccion
     print("GANO VISITANTE")
     print(pago_extra[id_fixture][0])
     aposto = int (aposto)
@@ -510,6 +546,9 @@ def gana_visitante(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:i
        modificar_transacciones(usuario,"Pierde",dinero)
 
 def empate(opcion:int,aposto:int,dinero:int,usuario:str)->None:
+    #Pre: Resivo pago extra (pago extra:L(Se guarda con "L" si tiene el true el local o con "V"
+    #si tiene el true el visitante),3(Numero al azar)), usuario(mail del usuario) y dinero 
+    #Post: Revisa la opcion, si gano genera un pago, una transaccion y actualiza el archivo csv con el dinero ganado y si pierde lo resta del archivo csv y genera una transaccion
     print("EMPATARON")
     print()
     aposto = int (aposto)
@@ -525,6 +564,11 @@ def empate(opcion:int,aposto:int,dinero:int,usuario:str)->None:
        modificar_transacciones(usuario,"Pierde",dinero)
 
 def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
+    #Pre: Resivo pago extra (pago extra:L(Se guarda con "L" si tiene el true el local o con "V"
+    #si tiene el true el visitante),3(Numero al azar)), id_foxture(numero de fixture),opcion("L","V" y "EMPATE"), usuario(mail del usuario) 
+    #Se tira un dado(1 al 3) para ver quien gana
+    #Se lee el usuarios.csv para solicitar el dinero del usuario actualmente
+    #Post: Se actualiza usuarios.csv y transacciones.csv con lo apostado y se ingresa a las funciones dependiendo el dado 
      datos = []
      
      with open("usuarios.csv", newline='', encoding="UTF-8") as archivo_csv:
@@ -545,8 +589,8 @@ def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
 
      dinero_disponible = int(usuarios_dinero[usuario])
 
-     print("La apuesta podrá ser Ganador(L)/Empate/Ganador(V)")
-     opcion = input("Ingrese su opcion ").upper()
+     print("La apuesta podrá ser ganador Local (L)/Empate/Ganador visitante (V)")
+     opcion = input("Ingrese su opcion: ").upper()
 
      print()
 
@@ -558,7 +602,7 @@ def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
 
      aposto = validar_numero(aposto)
 
-     while aposto > dinero_disponible: 
+     while aposto > dinero_disponible: #Verifico que el dinero apostado sea del disponible
               aposto = input("Saldo insuficiente, intente de nuevo: ")
 
      modificar_transacciones(usuario,"Aposto", aposto) #Aumenta la cantidad apostada en usuarios.csv
@@ -578,6 +622,10 @@ def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
         empate(opcion,aposto,dinero,usuario)
       
 def apuesta_opc(pago_extra:dict,id_fixture:int,usuario:str)->None:
+    ##Pre: Recibo pago extra (pago extra:L(Se guarda con "L" si tiene el true el local o con "V"
+    #si tiene el true el visitante),3(Numero al azar)), id_fixture(numero de fixture),opcion("L","V" y "EMPATE"), usuario(mail del usuario)
+    #Post: Ingreso dichas variables a apuesta dependiendo si el usuario decide apostar 
+
 
     opcion = input("Deseas apostar por este partido s/n ")
 
@@ -588,6 +636,8 @@ def apuesta_opc(pago_extra:dict,id_fixture:int,usuario:str)->None:
         print("SALISTE")
 
 def pago_apuesta(fixture_json:dict,usuario:str)->dict:
+    #Pre: Recibo el un diccionario con el fixture solicitado en la api y el usuario (usuario = mail)
+    #post:Genero mediante el diccionario y el numero de fixture elegido por el usuario un pedido a la api con las predicciones e imprimo lo que paga por apuesta, y te adentra a la funcion apuesta con el id_fixture y el mail
     
     pago_extra = {}#Id fixture:nro random de paga
 
@@ -603,7 +653,7 @@ def pago_apuesta(fixture_json:dict,usuario:str)->dict:
         numero_fixture = validar_numero(numero_fixture)
 
         
-    print(fixture_json["response"][numero_fixture-1]["fixture"]["id"])
+    print()
 
     id_fixture = fixture_json["response"][numero_fixture-1]["fixture"]["id"]#Guardo el id del fixture mediante el numero de fixture elegido
 
@@ -664,7 +714,7 @@ def impresion_fixture(fixture_json:dict)->None:
        
 def fixture(usuario:str)->None:
     #Pre: Pido un equipo (str)
-    #Post: Genero un pedido a la api con el fixture del equipo
+    #Post: Genero un pedido a la api con el fixture del equipo y me adentro a las funciones para apostar
     print("EQUIPOS EXISTENTES")
     ids_de_equipos = impresion_equipos_liga_profesional()
     print()
@@ -704,6 +754,7 @@ def fixture(usuario:str)->None:
 
 #-------------------MENU------------------------------------------------------------------------------------------------------------------
 def imprimir_opciones() -> None:
+    #IMPRIMO LAS OPCIONES
     print("-"*20)
     print("Menu de Opciones:")
     print("a. Plantel segun el equipo")
@@ -718,6 +769,7 @@ def imprimir_opciones() -> None:
     print("-"*20)
 
 def seleccionar_opcion() -> str:
+    #Post: Retorna una opcion elegida por el usuario
     imprimir_opciones()
 
     opt = input("Ingrese una opcion: ")
@@ -726,6 +778,8 @@ def seleccionar_opcion() -> str:
     return opt
 
 def menu(usuario)->None:
+    #Pre: Resive al usuario 
+    #Post: Se ingresa al menu del juego con las opciones para jugar
 
     opt = seleccionar_opcion()
 
@@ -758,11 +812,16 @@ def menu(usuario)->None:
             print("OPCION INCORRECTA!!!. Seleccione una opcion porfavor")
         
         opt  =  seleccionar_opcion ()
+    print()
+    print("SALIO")
+    print()
+    inicio()
 
 #-------------------MENU--------------------------------------------------------------------------------------------------------------------
 
 #-------------------CREACION DE ARCHIVO-----------------------------------------------------------------------------------------------------
 def creacion_archivos_csv()->None:
+     #CREA LOS ARCHIVOS USUARIOS.CSV Y TRANSACCIONES.CSV
      
      with open("usuarios.csv", 'w', newline ='') as archivo_csv:
         writer = csv.writer(archivo_csv, delimiter=",")       
