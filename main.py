@@ -1,4 +1,6 @@
 import csv , requests , random , requests
+from passlib.context import CryptContext
+import matplotlib.pyplot as plt
 
 #-----------------------------VALIDACIONES------------------------------------------------------------------------------------------
 def validation_yes_no(respuesta)->bool:
@@ -166,6 +168,57 @@ def inicio()->None:
     iniciar_sesion()  
 
 #1----------------------------------------------------------------------------------------------------------------------------------------
+
+#5-----------------------------------------------------------------------------------------------------------------------------------------
+def grafico() -> None:
+    print("EQUIPOS EXISTENTES")
+    ids_de_equipos = impresion_equipos_liga_profesional()
+    print()
+    equipo = input("ingrese un equipo ")
+    print()
+    while validation_equipos(equipo, ids_de_equipos.keys()):
+        print("")
+        impresion_equipos_liga_profesional()
+        print()
+        equipo = input("su equipo no fue encontrado, ingrese un equipo de la lista ")
+        print()
+
+    id_de_equipo = ids_de_equipos[equipo] 
+
+
+    url = "https://v3.football.api-sports.io/teams/statistics"
+
+    params={
+        "league":"128",
+        "season":"2023",
+        "team" : id_de_equipo
+    }
+    headers = {
+    'x-rapidapi-key': '27f73ffa427b9ace919cc32b30270953',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+
+    response = requests.request("GET", url, headers=headers, params=params)
+    reponse_json = response.json()
+
+    goles = []
+    minutos = list(reponse_json["response"]["goals"]["for"]["minute"].keys())
+    for i in minutos:
+         goles.append(reponse_json["response"]["goals"]["for"]["minute"][i]["total"])
+
+    generar_grafico_goles_minutos(minutos,goles,equipo)
+
+def generar_grafico_goles_minutos(minutos,goles,equipo):
+    #print(f"Goles del equipo {nombre_equipo}: {goles_equipo}")
+    #print(f"Minutos jugados del equipo {nombre_equipo}: {minutos_jugados}")
+
+    plt.plot(minutos, goles)
+    plt.xlabel("Minutos")
+    plt.ylabel("Goles")
+    plt.title("Goles realizados por " + equipo)
+    plt.show()
+#5-----------------------------------------------------------------------------------------------------------------------------------------
+
 def menu(usuario)->None:
     pass
 
