@@ -1,6 +1,7 @@
-import csv , requests , random , requests
+import csv , requests , random
 from passlib.context import CryptContext
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 #-----------------------------VALIDACIONES------------------------------------------------------------------------------------------
 def validation_yes_no(respuesta)->bool:
@@ -227,7 +228,43 @@ def impresion_equipos_liga_profesional()->dict:
     
 
     return diccionario_equipos_ids
-#2----------------------------------------------------------------------------------------------------------------------------------------
+#2-----------------------------------------------------------------------------------------------------------------------------------------
+#3-----------------------------------------------------------------------------------------------------------------------------------------
+def tabla_posiciones()->None:
+    season = input("ingrese la temporada a utilizar: ")
+    while(validation_temporadas(season)):
+        season = input("ingrese una temporada desde 2015-2023 (2023 no esta actualizado)  ")
+
+    url = "https://v3.football.api-sports.io/standings"
+
+    params={
+        "league":"128",
+        "season": season,
+    }
+    headers = {
+    'x-rapidapi-key': '0a46210016de4ff4781c6efe3d7e8711',
+    'x-rapidapi-host': 'v3.football.api-sports.io'
+    }
+
+    response = requests.request("GET", url, headers=headers, params=params)
+    reponse_json = response.json()
+
+    print("")
+    print(f"Tabla de posiciones Año {season}")
+
+    val =0
+    for i in range(len(reponse_json["response"])):
+       for e in range(len(reponse_json["response"][i]["league"]["standings"])):
+            
+            for f in range(len(reponse_json["response"][i]["league"]["standings"][e])):     
+                print(reponse_json["response"][i]["league"]["standings"][e][f]["rank"],"-", reponse_json["response"][i]["league"]["standings"][e][f]["team"]["name"]," (puntos:", reponse_json["response"][i]["league"]["standings"][e][f]["points"],")")
+
+            if season in ["2022"] and val == 0:
+                val = 1
+                print("")
+                print("----Liga Argentina 1era fase----")
+
+#3-----------------------------------------------------------------------------------------------------------------------------------------
 #4-----------------------------------------------------------------------------------------------------------------------------------------
 def info_equipos():
     dic_equipos_existentes = impresion_equipos_liga_profesional()
@@ -308,6 +345,96 @@ def generar_grafico_goles_minutos(minutos,goles,equipo):
     plt.title("Goles realizados por " + equipo)
     plt.show()
 #5-----------------------------------------------------------------------------------------------------------------------------------------
+#6-----------------------------------------------------------------------------------------------------------------------------------------
+
+def lista_transacciones()->list:
+    lista_info = []
+    with open("transacciones.csv") as archivo_csv:
+        csv_reader = csv.reader(archivo_csv)
+
+        for listas_csv in csv_reader:
+            print(listas_csv)
+            lista_info.append([listas_csv[0],listas_csv[1],listas_csv[2]]) 
+
+    return lista_info
+
+def conversor_de_dict_en_list(diccionario:dict)->list:
+    mails = diccionario.keys()
+    lista_resultante = []
+    for i in mails:
+        lista_resultante.append([i, diccionario[i]["username"],diccionario[i]["password"],diccionario[i]["cantidadApostada"],diccionario[i]["fechaUltimaApuesta"],diccionario[i]["dineroDisponible"]])
+    
+    
+    return lista_resultante
+
+def modificar_transacciones(mail:str,tipo_de_transaccion:str, cantidad:int)->None:
+    
+
+    diccionario_informacion_usuarios = diccionario_infromacion_usuarios()
+
+    if tipo_de_transaccion == "Aposto":#Actualiza usuarios.csv en disponible 
+       diccionario_informacion_usuarios[mail]["cantidadApostada"] = int(diccionario_informacion_usuarios[mail]["cantidadApostada"]) + cantidad
+       diccionario_informacion_usuarios[mail]["fechaUltimaApuesta"] = str(datetime.now())[0:16]
+       lista_informacion_de_usuarios = conversor_de_dict_en_list(diccionario_informacion_usuarios)
+       lista_ingresar_archivo_usuarios(lista_informacion_de_usuarios)
+
+   
+    elif tipo_de_transaccion != "Aposto":
+       #actualiza el archivo de usuarios con lo ganado perdido o ingresado
+       diccionario_informacion_usuarios[mail]["dineroDisponible"] = int(diccionario_informacion_usuarios[mail]["dineroDisponible"]) + cantidad
+       lista_informacion_de_usuarios = conversor_de_dict_en_list(diccionario_informacion_usuarios)
+       lista_ingresar_archivo_usuarios(lista_informacion_de_usuarios)
+
+       #actualiza el archivo de transacciones 
+       lista_de_transacciones = [mail,tipo_de_transaccion,str(datetime.now())[0:16],cantidad]
+       lista_ingresar_archivo("transacciones.csv", lista_de_transacciones)
+    
+
+def ingresar_dinero(usuario:str):
+    print("ha selecciondo ingresar dinero")
+    cantidad = input("ingrese el monto a depositar")
+    
+    cantidad = validar_numero(cantidad)
+
+    modificar_transacciones(usuario,"Deposita", cantidad)
+
+#6-----------------------------------------------------------------------------------------------------------------------------------------
+#7-----------------------------------------------------------------------------------------------------------------------------------------
+def usuario_mas_apostado()->None:
+     inf_usuarios = diccionario_infromacion_usuarios()
+     
+
+     usuarios_apuestas = {}
+
+     for i in inf_usuarios.keys():
+         usuarios_apuestas[i] = inf_usuarios[i]["cantidadApostada"]
+
+
+     print("El usuario que mas veces aposto es:",max(usuarios_apuestas, key=usuarios_apuestas.get))
+
+#7-----------------------------------------------------------------------------------------------------------------------------------------
+
+#8-----------------------------------------------------------------------------------------------------------------------------------------
+def usuarios_mas_gano()->None:
+     
+     with open("transacciones.csv") as archivo_csv:
+        csv_reader = csv.reader(archivo_csv)
+
+        print(csv_reader)
+        usuarios_ganadas = {}
+
+        for i in csv_reader:
+            if i[1] == "Gana":
+                if i[0] in usuarios_ganadas.keys():
+                    usuarios_ganadas[i[0]] = usuarios_ganadas[i[0]]+1
+                
+                else:
+                    usuarios_ganadas[i[0]] = 1
+                
+
+        print("El usuario que mas veces gano es:",max(usuarios_ganadas, key=usuarios_ganadas.get))
+    
+#8-----------------------------------------------------------------------------------------------------------------------------------------
 #9-----------------------------------------------------------------------------------------------------------------------------------------
 def gana_local(pago_extra:dict,id_fixture:int,opcion:int,aposto:int,dinero:int,usuario:str)->None:
     print("GANO LOCAL")
@@ -394,7 +521,7 @@ def apuesta(pago_extra:dict,id_fixture:int,usuario:str)->None:
 
      dinero = 0
 
-     simulacion = 1
+     simulacion = random.randint(1,3)
 
      if simulacion == 1:
         gana_local(pago_extra,id_fixture,opcion,aposto,dinero,usuario)
@@ -478,7 +605,7 @@ def pago_apuesta(fixture_json:dict,usuario:str)->dict:
         pago_extra[id_fixture] = "V",nro_pago
     
     apuesta_opc(pago_extra,id_fixture,usuario)
-    pass
+   
 
 def impresion_fixture(fixture_json:dict)->None:
     #Pre: Ingreso un diccionario con el fixture de un equipo
@@ -589,9 +716,17 @@ def menu(usuario)->None:
         opt  =  seleccionar_opcion ()
 
 #-------------------MENU--------------------------------------------------------------------------------------------------------------------
+#-------------------CREACION DE ARCHIVO-----------------------------------------------------------------------------------------------------
+def creacion_archivos_csv()->None:
+     
+     with open("usuarios.csv", 'w', newline ='') as archivo_csv:
+        writer = csv.writer(archivo_csv, delimiter=",")       
+        writer.writerow(["MAIL","NOMBRE DE USUARIO","PASSWORD", "CANTIDAD APOSTADA","FECHA ULTIMA APUESTA","DINERO DISPONIBLE"])
 
-def menu(usuario)->None:
-    pass
+     with open("transacciones.csv", 'w', newline ='') as archivo_csv:
+        writer = csv.writer(archivo_csv, delimiter=",")       
+        writer.writerow(["MAIL","TIPO DE TRANSACCION","FECHA", "IMPORTE"])
+#-------------------CREACION DE ARCHIVO-----------------------------------------------------------------------------------------------------
 
 def main()->None:
     inicio()
